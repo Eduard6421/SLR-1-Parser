@@ -1,0 +1,11 @@
+D:\Facultate\Tehnici de compilare\SLR-1-Parser\Tema2\bin\Debug\netcoreapp2.0\Tema2.deps.json
+D:\Facultate\Tehnici de compilare\SLR-1-Parser\Tema2\bin\Debug\netcoreapp2.0\Tema2.runtimeconfig.json
+D:\Facultate\Tehnici de compilare\SLR-1-Parser\Tema2\bin\Debug\netcoreapp2.0\Tema2.runtimeconfig.dev.json
+D:\Facultate\Tehnici de compilare\SLR-1-Parser\Tema2\bin\Debug\netcoreapp2.0\Tema2.dll
+D:\Facultate\Tehnici de compilare\SLR-1-Parser\Tema2\bin\Debug\netcoreapp2.0\Tema2.pdb
+D:\Facultate\Tehnici de compilare\SLR-1-Parser\Tema2\obj\Debug\netcoreapp2.0\Tema2.csprojResolveAssemblyReference.cache
+D:\Facultate\Tehnici de compilare\SLR-1-Parser\Tema2\obj\Debug\netcoreapp2.0\Tema2.csproj.CoreCompileInputs.cache
+D:\Facultate\Tehnici de compilare\SLR-1-Parser\Tema2\obj\Debug\netcoreapp2.0\Tema2.AssemblyInfoInputs.cache
+D:\Facultate\Tehnici de compilare\SLR-1-Parser\Tema2\obj\Debug\netcoreapp2.0\Tema2.AssemblyInfo.cs
+D:\Facultate\Tehnici de compilare\SLR-1-Parser\Tema2\obj\Debug\netcoreapp2.0\Tema2.dll
+D:\Facultate\Tehnici de compilare\SLR-1-Parser\Tema2\obj\Debug\netcoreapp2.0\Tema2.pdb

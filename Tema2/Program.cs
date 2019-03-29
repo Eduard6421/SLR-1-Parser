@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices.ComTypes;
 using Microsoft.VisualBasic.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace Tema2
 {
@@ -274,7 +275,7 @@ namespace Tema2
             newState.Add(prod);
 
 
-            for (int i = 0; i < newState.Count; ++i)
+            for (int i = 0; i < FirstProductionList.Count; ++i)
             {
                 var currentProd = FirstProductionList[i];
 
@@ -522,6 +523,7 @@ namespace Tema2
             PrintAllTranzitions();
 
             CreateParseTable();
+            System.Console.WriteLine(IsSLR1() ? "Gramatica este SLR(1)" : "Gramatica nu este SLR(1)");
             Console.ReadKey();
         }
 
@@ -551,6 +553,55 @@ namespace Tema2
 
             System.Console.WriteLine("1 to accept with $ ");
 
+        }
+
+        
+        public static bool IsSLR1()
+        {
+            
+            for (int i = 0; i < finalStates.Count; ++i)
+            {
+                for (int j = 0; j < finalStates[i].Count; ++j)
+                {
+                    for (int k = 0; k < finalStates[i].Count; ++k)
+                    {
+
+                        if (j == k) continue;
+
+                        if (finalStates[i][j].IsClosed() && finalStates[i][k].IsClosed())
+                        {
+                            var follow1 = FollowSet[finalStates[i][j].ProductionSymbol];
+                            var follow2 = FollowSet[finalStates[i][k].ProductionSymbol];
+
+                            follow1.IntersectWith(follow2);
+
+                            if (follow1.Count > 0)
+                            {
+                                return false;
+                            }
+                        }
+
+                        if (finalStates[i][j].IsClosed() && finalStates[i][k].IsBehindTerminal())
+                        {
+                            var follow1 = FollowSet[finalStates[i][j].ProductionSymbol];
+
+                            if (follow1.Contains(finalStates[i][k].GetCurrentSymbol()))
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /*TODO: change bool to list of integers */
+        public static bool GetRightDerivation(string word)
+        {
+
+            return false;
         }
     }
 

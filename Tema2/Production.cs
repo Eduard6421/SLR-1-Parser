@@ -62,6 +62,16 @@ namespace Tema2
 
         }
 
+        public bool IsBehindTerminal()
+        {
+            if (DotPosition == ProductionList.Count)
+            {
+                return false;
+            }
+            return !char.IsUpper(ProductionList[DotPosition]);
+
+        }
+
         public char GetFirst()
         {
             return ProductionList[0];
