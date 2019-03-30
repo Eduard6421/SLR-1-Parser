@@ -15,6 +15,7 @@ namespace Tema2
         private static string InputFile = @"..\..\..\data.in";
         private static string WordsFile = @"..\..\..\words.in";
         private static string OutputFile = @"..\..\..\data.out";
+        private static string TableFile = @"..\..\..\table.out";
 
         private static List<List<Production>> States;
         private static List<List<Production>> finalStates;
@@ -22,7 +23,10 @@ namespace Tema2
         private static HashSet<Transition> TransitionList;
         private static Dictionary<char, HashSet<char>> FirstSet;
         private static Dictionary<char, HashSet<char>> FollowSet;
+        private static Dictionary<(int, char), string> Actions = new Dictionary<(int, char), string>();
+        private static Dictionary<(int, char), int> GoTo = new Dictionary<(int, char), int>();
         private static List<String> Words;
+        private static StreamWriter file;
 
         public static void AddExtraProduction()
         {
@@ -171,7 +175,7 @@ namespace Tema2
                             States.Add(newState);
                             TransitionList.Add(newTranzition);
                         }
-                    Label:
+                        Label:
                         continue;
                     }
                 }
@@ -194,9 +198,22 @@ namespace Tema2
 
         public static void PrintAllTranzitions()
         {
+            File.CreateText(TableFile).Close();
+            file = File.AppendText(TableFile);
+
             foreach (Transition t in TransitionList)
             {
                 System.Console.WriteLine(t.FromState + " to " + t.ToState + " with " + t.Character + " operation type :" + (t.IsGoto ? "Move" : "Shift"));
+                if (t.IsGoto)
+                {
+                    GoTo[(t.FromState, t.Character)] = t.ToState;
+                    file.WriteLine(String.Format("GOTO({0},{1}) == {2}", t.FromState, t.Character, t.ToState));
+                }
+                else
+                {
+                    Actions[(t.FromState, t.Character)] = "S" + t.ToState;
+                    file.WriteLine(String.Format("ACTION({0},{1}) == S{2}", t.FromState, t.Character, t.ToState));
+                }
             }
         }
         public static void CombineStates()
@@ -517,6 +534,8 @@ namespace Tema2
         }
         public static void CreateParseTable()
         {
+
+
             for (int i = 0; i < States.Count; ++i)
             {
                 if (States[i][0].IsClosed())
@@ -528,6 +547,8 @@ namespace Tema2
                             foreach (var element in FollowSet[FirstProductionList[j].ProductionSymbol])
                             {
                                 System.Console.WriteLine(i + " to " + j + " with " + element + " operation type : Reduce");
+                                file.WriteLine(String.Format("ACTION({0},{1}) == R{2}", i, element, j));
+                                Actions[(i, element)] = "R" + j;
                             }
                             goto nextlabel;
                         }
@@ -539,6 +560,10 @@ namespace Tema2
             }
 
             System.Console.WriteLine("1 to accept with $ ");
+            file.WriteLine("ACTION(1,$) == A");
+            Actions[(1, '$')] = "A";
+
+            file.Close();
 
         }
 
@@ -576,7 +601,7 @@ namespace Tema2
                 ReadWords();
                 foreach (string word in Words)
                 {
-                    CheckWord(word);
+                    System.Console.WriteLine(word + " is " + CheckWord(word));
                 }
             }
             else
@@ -586,17 +611,17 @@ namespace Tema2
 
             Console.ReadKey();
         }
-
+        
 
         public static string CheckWord(string word)
         {
-            throw new NotImplementedException("Implementeaza asta baby");
+            return (GetDerivation(word) == true ? "Accepted" : "Rejected");
         }
 
-        
+
         public static bool IsSLR1()
         {
-            
+
             for (int i = 0; i < finalStates.Count; ++i)
             {
                 for (int j = 0; j < finalStates[i].Count; ++j)
@@ -636,11 +661,61 @@ namespace Tema2
         }
 
         /*TODO: change bool to list of integers */
-        public static bool GetRightDerivation(string word)
+        public static bool GetDerivation(string word)
         {
+
+            word = word + "$";
+            int i = 0;
+            var states = new Stack<int>();
+            states.Push(0);
+        
+
+            while (true)
+            {
+                var state = states.Pop();
+                var symbol = word[i];
+
+                var expression = Actions[(state, symbol)];
+
+                //Accept
+                if (expression.First() == 'A')
+                {
+                    return true;
+                }
+
+                //Shift
+                if (expression.First() == 'S')
+                {
+                    int nextState = Int32.Parse(expression.Substring(1));
+                    states.Push(nextState);
+                    i++;
+                }
+                else
+                {
+                    //Reduce
+                    if (expression.First() == 'R')
+                    {
+                        
+                        var productionNr = Int32.Parse(expression.Substring(1));
+                        var production = FirstProductionList[productionNr]/*a productionNr productie */;
+
+                        for (int t = 1; t <= production.ProductionList.Count(); ++t)
+                            states.Pop();
+
+                        states.Push(GoTo[(states.Peek(), production.ProductionSymbol)]);
+                    }
+                    else
+                    {
+                        //error
+                        return false;
+                    }
+                }
+            }
 
             return false;
         }
     }
 
 }
+
+
