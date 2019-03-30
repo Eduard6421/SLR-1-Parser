@@ -28,6 +28,10 @@ namespace Tema2
         private static List<String> Words;
         private static StreamWriter file;
 
+
+        private static int[] fathers;
+        private static int[] actual;
+
         public static void AddExtraProduction()
         {
             Production extraProduction = new Production('X');
@@ -102,86 +106,113 @@ namespace Tema2
         public static void CreateParseTree()
         {
             bool complete = false;
-
             while (!complete)
             {
                 complete = true;
 
                 for (int i = 0; i < States.Count; ++i)
                 {
-                    for (int j = 0; j < States[i].Count; ++j)
+
+                    List<Production> newState = new List<Production>();
+                    HashSet<char> chars = new HashSet<char>();
+                    for (int k = 0; k < States[i].Count; ++k)
                     {
-                        Production prod = new Production();
 
-                        prod.ProductionList = States[i][j].ProductionList;
-                        prod.DotPosition = States[i][j].DotPosition;
-                        prod.ProductionSymbol = States[i][j].ProductionSymbol;
-
-                        if (!prod.IsClosed())
-                        {
-                            Transition newTranzition = new Transition();
-
-                            char character;
-                            character = prod.GetCurrentSymbol();
-                            prod.DotPosition = prod.DotPosition + 1;
-
-                            for (int i1 = 0; i1 < States.Count; ++i1)
-                            {
-                                for (int j1 = 0; j1 < States[i1].Count; ++j1)
-                                {
-                                    if (prod.ProductionList == States[i1][j1].ProductionList &&
-                                        prod.DotPosition == States[i1][j1].DotPosition)
-                                    {
-                                        newTranzition.Character = character;
-                                        newTranzition.FromState = i;
-                                        newTranzition.ToState = i1;
-                                        newTranzition.IsGoto = char.IsUpper(character);
-
-                                        TransitionList.Add(newTranzition);
-                                        goto Label;
-
-                                    }
-                                }
-                            }
-                            List<Production> newState = new List<Production>();
-
-                            newTranzition.Character = character;
-                            newTranzition.FromState = i;
-                            newTranzition.ToState = States.Count;
-                            newTranzition.IsGoto = char.IsUpper(character);
-
-                            newState.Add(prod);
-
-                            for (int j3 = 0; j3 < newState.Count; ++j3)
-                            {
-                                prod = newState[j3];
-
-                                if (prod.IsBehindProduction())
-                                {
-                                    for (int i3 = 0; i3 < FirstProductionList.Count; ++i3)
-                                    {
-                                        if (FirstProductionList[i3].ProductionSymbol == prod.GetCurrentSymbol() && !newState.Contains(FirstProductionList[i3]))
-                                        {
-                                            newState.Add(FirstProductionList[i3]);
-                                        }
-                                    }
-
-                                }
-
-
-                            }
-
-                            complete = false;
-                            States.Add(newState);
-                            TransitionList.Add(newTranzition);
-                        }
-                        Label:
-                        continue;
+                        if (!States[i][k].IsClosed())
+                            chars.Add(States[i][k].GetCurrentSymbol());
                     }
+
+
+                    foreach (char car in chars)
+                    {
+                        newState = new List<Production>();
+
+                        for (int j = 0; j < States[i].Count; ++j)
+                        {
+                            if (!States[i][j].IsClosed() && States[i][j].GetCurrentSymbol() == car)
+                            {
+
+                                Production prod = new Production();
+
+
+                                prod.ProductionList = States[i][j].ProductionList;
+                                prod.DotPosition = States[i][j].DotPosition;
+                                prod.ProductionSymbol = States[i][j].ProductionSymbol;
+
+                                prod.DotPosition = prod.DotPosition + 1;
+
+                                newState.Add(prod);
+
+                            }
+                        }
+                        Transition newTranzition = new Transition();
+                        newTranzition.Character = car;
+                        newTranzition.FromState = i;
+                        newTranzition.IsGoto = char.IsUpper(car);
+
+
+                        List<Production> tmpState = new List<Production>(newState);
+
+                        if (newState.Count > 0)
+                        {
+                            newState = new List<Production>(tmpState);
+
+                            HashSet<Production> tmpHash = new HashSet<Production>();
+
+
+                            do
+                            {
+                                newState = new List<Production>(tmpState);
+                                for (int ind = 0; ind < tmpState.Count; ++ind)
+                                {
+                                    if (tmpState[ind].IsBehindProduction())
+                                    {
+                                        for (int ind1 = 0; ind1 < FirstProductionList.Count; ++ind1)
+                                        {
+                                            if (FirstProductionList[ind1].ProductionSymbol ==
+                                                tmpState[ind].GetCurrentSymbol() && !tmpHash.Contains(FirstProductionList[ind1]))
+                                            {
+                                                tmpState.Add(FirstProductionList[ind1]);
+                                                tmpHash.Add(FirstProductionList[ind1]);
+                                            }
+                                        }
+
+                                    }
+                                }
+
+                            } while (tmpState.Count != newState.Count);
+
+                            bool contains = false;
+                            for (int i2 = 0; i2 < States.Count; ++i2)
+                            {
+
+
+                                if (States[i2].Except(newState).ToList().Count == 0)
+                                {
+                                    contains = true;
+                                    newTranzition.ToState = i2;
+                                    TransitionList.Add(newTranzition);
+
+                                }
+
+                            }
+
+                            if (!contains)
+                            {
+                                complete = false;
+                                newTranzition.ToState = States.Count;
+                                TransitionList.Add(newTranzition);
+                                States.Add(newState);
+
+                            }
+
+                        }
+
+                    }
+
                 }
 
             }
-
         }
 
         public static void PrintAllStates()
@@ -203,6 +234,7 @@ namespace Tema2
 
             foreach (Transition t in TransitionList)
             {
+
                 System.Console.WriteLine(t.FromState + " to " + t.ToState + " with " + t.Character + " operation type :" + (t.IsGoto ? "Move" : "Shift"));
                 if (t.IsGoto)
                 {
@@ -222,76 +254,67 @@ namespace Tema2
             HashSet<Transition> newHash = new HashSet<Transition>();
             finalStates = new List<List<Production>>();
 
-
-            foreach (Transition t in TransitionList)
+            for (int i = 0; i < States.Count; ++i)
             {
-                foreach (Transition v in TransitionList)
-                {
-                    if (t != v && t.FromState == v.FromState && t.Character == v.Character)
-                    {
-                        int min = t.ToState < v.ToState ? t.ToState : v.ToState;
-                        int max = t.ToState >= v.ToState ? t.ToState : v.ToState;
-                        Tuple<int, int> newTuple = new Tuple<int, int>(min, max);
-                        sameStates.Add(newTuple);
-                    }
-                }
-
-            }
-
-            foreach (Tuple<int, int> t in sameStates)
-            {
-
-                List<Production> combinedProduction = new List<Production>();
-
-                combinedProduction = States[t.Item1];
-
-                for (int i = 0; i < States[t.Item2].Count; ++i)
-                {
-                    if (!combinedProduction.Contains(States[t.Item2][i]))
-                    {
-                        combinedProduction.Add(States[t.Item2][i]);
-                    }
-                }
-
-                finalStates.Add(combinedProduction);
+                fathers[i] = i;
             }
 
             for (int i = 0; i < States.Count; ++i)
             {
-                bool addIt = true;
-
-                foreach (Tuple<int, int> t in sameStates)
+                for (int j = 0; j < States.Count; ++j)
                 {
-                    if (i == t.Item2)
+                    if (i != j)
                     {
-                        break;
-                        addIt = false;
+                        if (States[i].Except(States[j]).ToList().Count == 0) { }
+                        int min = i < j ? i : j;
+                        int max = i > j ? i : j;
+
+                        while (fathers[min] != min)
+                        {
+                            min = fathers[min];
+                        }
+                        fathers[max] = min;
+
                     }
                 }
+            }
 
-                if (addIt)
+
+            int numOfState = 0;
+            for (int i = 0; i < States.Count; ++i)
+            {
+                if (i == fathers[i])
                 {
-                    finalStates.Add(States[i]);
+                    actual[i] = numOfState;
+                    List<Production> combinedProduction = new List<Production>();
+
+                    for (int j = 0; j < States.Count; ++j)
+                    {
+                        if (fathers[j] == i)
+                        {
+                            foreach (Production t in States[j])
+                            {
+                                combinedProduction.Add(t);
+                                actual[j] = numOfState;
+                            }
+                        }
+                    }
+
+                    if (combinedProduction.Count > 0)
+                        finalStates.Add(combinedProduction);
+                    numOfState++;
                 }
             }
 
             foreach (Transition t in TransitionList)
             {
-                foreach (Tuple<int, int> tup in sameStates)
-                {
-                    if (t.ToState == tup.Item2)
-                        t.ToState = tup.Item1;
-                    if (t.FromState == tup.Item2)
-                        t.FromState = tup.Item1;
-                }
-
+                t.ToState = actual[fathers[t.ToState]];
+                t.FromState = actual[fathers[t.FromState]];
+                if (!newHash.Contains(t))
+                    newHash.Add(t);
             }
 
 
-            foreach (Transition t in TransitionList)
-            {
-                newHash.Add(t);
-            }
 
             TransitionList = newHash;
 
@@ -421,116 +444,86 @@ namespace Tema2
             {
                 changed = false;
 
-                Dictionary<char, HashSet<char>> tmpFollow = new Dictionary<char, HashSet<char>>(FollowSet);
-
                 for (int i = 0; i < FirstProductionList.Count; ++i)
                 {
-                    var production = FirstProductionList[i].ProductionList;
-
-                    if (production.Count == 1 && char.IsUpper(production[0]))
+                    for (int j = 0; j < FirstProductionList[i].ProductionList.Count - 1; ++j)
                     {
-                        foreach (var element in FollowSet[FirstProductionList[i].ProductionSymbol])
-                        {
-                            int num1 = FollowSet[production[0]].Count;
-                            FollowSet[production[0]].Add(element);
+                        var letter = FirstProductionList[i].ProductionList[j];
 
-                            if (num1 != FollowSet[production[0]].Count)
+                        if (char.IsUpper(letter))
+                        {
+                            int count = FollowSet[letter].Count;
+
+                            foreach (char character in FirstSet[FirstProductionList[i].ProductionList[j + 1]])
+                            {
+                                if (character == '&' && letter == 'E')
+                                {
+                                    int asd = 2;
+
+                                }
+
+                                if (character != '~')
+                                    FollowSet[letter].Add(character);
+                            }
+
+                            if (FollowSet[letter].Count != count)
                             {
                                 changed = true;
                             }
                         }
                     }
 
-                    if (production.Count == 2 && char.IsUpper(production[1]))
+
+                    for (int j = 0; j < FirstProductionList[i].ProductionList.Count - 1; ++j)
                     {
+                        var letter = FirstProductionList[i].ProductionList[j];
 
-                        foreach (var element in FollowSet[FirstProductionList[i].ProductionSymbol])
+                        if (char.IsUpper(letter) && FirstSet[FirstProductionList[i].ProductionList[j + 1]].Contains('~'))
                         {
+                            int count = FollowSet[letter].Count;
 
-                            int num1 = FollowSet[production[1]].Count;
-                            FollowSet[production[1]].Add(element);
+                            foreach (char character in FollowSet[FirstProductionList[i].ProductionSymbol])
+                            {
+                                if (character == '&' && letter == 'E')
+                                {
+                                    int asd = 2;
 
-                            if (num1 != FollowSet[production[1]].Count)
+                                }
+                                FollowSet[letter].Add(character);
+                            }
+
+                            if (FollowSet[letter].Count != count)
                             {
                                 changed = true;
                             }
-
                         }
                     }
 
+                    var letter1 = FirstProductionList[i].ProductionList[FirstProductionList[i].ProductionList.Count - 1];
 
-                    if (production.Count == 2 && char.IsUpper(production[0]) && FirstSet[production[1]].Contains('~'))
+
+                    if (char.IsUpper(letter1))
                     {
-                        foreach (var element in FollowSet[FirstProductionList[i].ProductionSymbol])
+                        int count = FollowSet[letter1].Count;
+
+                        foreach (char character in FollowSet[FirstProductionList[i].ProductionSymbol])
                         {
-
-                            int num1 = FollowSet[production[0]].Count;
-                            FollowSet[production[0]].Add(element);
-
-                            if (num1 != FollowSet[production[0]].Count)
+                            if (character == '&' && letter1 == 'E')
                             {
-                                changed = true;
-                            }
+                                int asd = 2;
 
+                            }
+                            FollowSet[letter1].Add(character);
+                        }
+
+                        if (FollowSet[letter1].Count != count)
+                        {
+                            changed = true;
                         }
                     }
-
-
-                    if (production.Count == 3 && char.IsUpper(production[1]) && FirstSet[production[2]].Contains('~'))
-                    {
-                        foreach (var element in FollowSet[FirstProductionList[i].ProductionSymbol])
-                        {
-
-                            int num1 = FollowSet[production[1]].Count;
-                            FollowSet[production[1]].Add(element);
-
-                            if (num1 != FollowSet[production[1]].Count)
-                            {
-                                changed = true;
-                            }
-
-                        }
-                    }
-
-
-
-
-                    if (production.Count == 2 && char.IsUpper(production[0]) && production[1] != '~')
-                    {
-
-                        foreach (var element in FirstSet[production[1]])
-                        {
-                            if (element != '~')
-                            {
-                                int num1 = FollowSet[production[0]].Count;
-                                FollowSet[production[0]].Add(element);
-
-                                if (num1 != FollowSet[production[0]].Count)
-                                    changed = true;
-                            }
-                        }
-                    }
-
-                    if (production.Count == 3 && char.IsUpper(production[1]) && production[2] != '~')
-                    {
-
-                        foreach (var element in FirstSet[production[2]])
-                        {
-                            if (element != '~')
-                            {
-                                int num1 = FollowSet[production[1]].Count;
-                                FollowSet[production[1]].Add(element);
-
-                                if (num1 != FollowSet[production[1]].Count)
-                                    changed = true;
-                            }
-                        }
-                    }
-
-
                 }
-
             }
+            int a = 2;
         }
         public static void CreateParseTable()
         {
@@ -549,13 +542,15 @@ namespace Tema2
                                 System.Console.WriteLine(i + " to " + j + " with " + element + " operation type : Reduce");
                                 file.WriteLine(String.Format("ACTION({0},{1}) == R{2}", i, element, j));
                                 Actions[(i, element)] = "R" + j;
+
+                                // De la follow
                             }
                             goto nextlabel;
                         }
                     }
 
                 }
-                nextlabel:
+            nextlabel:
                 continue;
             }
 
@@ -570,6 +565,8 @@ namespace Tema2
 
         public static void Main(string[] args)
         {
+
+
             States = new List<List<Production>>();
             FirstProductionList = new List<Production>();
 
@@ -588,7 +585,11 @@ namespace Tema2
             AddFirstState();
 
             CreateParseTree();
-            CombineStates();
+
+            fathers = new int[States.Count];
+            actual = new int[States.Count];
+            finalStates = new List<List<Production>>(States);
+            //CombineStates();
 
             PrintAllStates();
             PrintAllTranzitions();
@@ -611,7 +612,7 @@ namespace Tema2
 
             Console.ReadKey();
         }
-        
+
 
         public static string CheckWord(string word)
         {
@@ -668,7 +669,7 @@ namespace Tema2
             int i = 0;
             var states = new Stack<int>();
             states.Push(0);
-        
+
 
             while (true)
             {
@@ -695,7 +696,7 @@ namespace Tema2
                     //Reduce
                     if (expression.First() == 'R')
                     {
-                        
+
                         var productionNr = Int32.Parse(expression.Substring(1));
                         var production = FirstProductionList[productionNr]/*a productionNr productie */;
 

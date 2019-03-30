@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Tema2
@@ -31,6 +32,38 @@ namespace Tema2
 
             return output;
 
+        }
+        public override int GetHashCode()
+        {
+
+
+            return 13 * (this.ProductionSymbol - '0') +
+                   7 * DotPosition+
+                   5 * ProductionList.GetHashCode();
+        }
+
+
+
+        public override bool Equals(object obj)
+        {
+            Production trans = obj as Production;
+
+            if (this.DotPosition == trans.DotPosition && this.ProductionSymbol == trans.ProductionSymbol && this.ProductionList.Count == trans.ProductionList.Count)
+            {
+                for (int i = 0; i < this.ProductionList.Count; ++i)
+                {
+                    if (this.ProductionList[i] != trans.ProductionList[i])
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                return false;
+            }
+
+            return true;
         }
 
 
