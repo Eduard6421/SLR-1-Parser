@@ -13,6 +13,7 @@ namespace Tema2
     class Program
     {
         private static string InputFile = @"..\..\..\data.in";
+        private static string WordsFile = @"..\..\..\words.in";
         private static string OutputFile = @"..\..\..\data.out";
 
         private static List<List<Production>> States;
@@ -21,6 +22,7 @@ namespace Tema2
         private static HashSet<Transition> TransitionList;
         private static Dictionary<char, HashSet<char>> FirstSet;
         private static Dictionary<char, HashSet<char>> FollowSet;
+        private static List<String> Words;
 
         public static void AddExtraProduction()
         {
@@ -74,6 +76,21 @@ namespace Tema2
                 FirstProductionList.Add(newProduction);
                 if (!FollowSet.ContainsKey(ProductionSymbol))
                     FollowSet.Add(ProductionSymbol, new HashSet<char>());
+            }
+
+        }
+
+        public static void ReadWords()
+        {
+
+            string line;
+            Words = new List<string>();
+
+            System.IO.StreamReader file = new System.IO.StreamReader(WordsFile);
+
+            while ((line = file.ReadLine()) != null)
+            {
+                Words.Add(line);
             }
 
         }
@@ -268,28 +285,31 @@ namespace Tema2
         public static void AddFirstState()
         {
             bool complete = true;
-            List<Production> newState = new List<Production>();
+            HashSet<Production> newState = new HashSet<Production>();
+            HashSet<Production> tmpState = new HashSet<Production>();
 
-            Production prod = FirstProductionList[0];
+            tmpState.Add(FirstProductionList[0]);
 
-            newState.Add(prod);
-
-
-            for (int i = 0; i < FirstProductionList.Count; ++i)
+            do
             {
-                var currentProd = FirstProductionList[i];
+                newState = new HashSet<Production>(tmpState);
 
-                for (int j = 0; j < FirstProductionList.Count; ++j)
+                foreach (var currentProd in newState)
                 {
-                    if (currentProd.GetFirst() == FirstProductionList[j].ProductionSymbol)
+                    for (int j = 0; j < FirstProductionList.Count; ++j)
                     {
-                        newState.Add(FirstProductionList[j]);
-                        complete = false;
+                        if (currentProd.GetFirst() == FirstProductionList[j].ProductionSymbol)
+                        {
+                            tmpState.Add(FirstProductionList[j]);
+                            complete = false;
+                        }
                     }
+
                 }
 
-            }
-            States.Add(newState);
+            } while (tmpState.Count > newState.Count);
+
+            States.Add(newState.ToList());
         }
 
         public static void ComputeFirst()
@@ -495,6 +515,32 @@ namespace Tema2
 
             }
         }
+        public static void CreateParseTable()
+        {
+            for (int i = 0; i < States.Count; ++i)
+            {
+                if (States[i][0].IsClosed())
+                {
+                    for (int j = 0; j < FirstProductionList.Count; ++j)
+                    {
+                        if (FollowSet.ContainsKey(FirstProductionList[j].ProductionSymbol) && FirstProductionList[j].ProductionList.SequenceEqual(States[i][0].ProductionList))
+                        {
+                            foreach (var element in FollowSet[FirstProductionList[j].ProductionSymbol])
+                            {
+                                System.Console.WriteLine(i + " to " + j + " with " + element + " operation type : Reduce");
+                            }
+                            goto nextlabel;
+                        }
+                    }
+
+                }
+                nextlabel:
+                continue;
+            }
+
+            System.Console.WriteLine("1 to accept with $ ");
+
+        }
 
 
         public static void Main(string[] args)
@@ -523,36 +569,28 @@ namespace Tema2
             PrintAllTranzitions();
 
             CreateParseTable();
-            System.Console.WriteLine(IsSLR1() ? "Gramatica este SLR(1)" : "Gramatica nu este SLR(1)");
+
+            if (IsSLR1())
+            {
+                System.Console.WriteLine("Gramatica este SLR(1)");
+                ReadWords();
+                foreach (string word in Words)
+                {
+                    CheckWord(word);
+                }
+            }
+            else
+            {
+                System.Console.WriteLine("Gramatica nu este SLR(1)");
+            }
+
             Console.ReadKey();
         }
 
 
-        public static void CreateParseTable()
+        public static string CheckWord(string word)
         {
-            for (int i = 0; i < States.Count; ++i)
-            {
-                if (States[i][0].IsClosed())
-                {
-                    for (int j = 0; j < FirstProductionList.Count; ++j)
-                    {
-                        if (FollowSet.ContainsKey(FirstProductionList[j].ProductionSymbol) && FirstProductionList[j].ProductionList.SequenceEqual(States[i][0].ProductionList))
-                        {
-                            foreach (var element in FollowSet[FirstProductionList[j].ProductionSymbol])
-                            {
-                                System.Console.WriteLine(i + " to " + j + " with " + element + " operation type : Reduce");
-                            }
-                            goto nextlabel;
-                        }
-                    }
-
-                }
-            nextlabel:
-                continue;
-            }
-
-            System.Console.WriteLine("1 to accept with $ ");
-
+            throw new NotImplementedException("Implementeaza asta baby");
         }
 
         

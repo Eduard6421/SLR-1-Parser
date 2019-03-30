@@ -1,7 +1,4 @@
-S E
-E E+T
-E T
-T T*F
-T F
-F (E)
-F a
+S (L)
+S a
+L L,S
+L S
