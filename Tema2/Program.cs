@@ -528,14 +528,14 @@ namespace Tema2
                     {
                         for (int j = 0; j < FirstProductionList.Count; ++j)
                         {
-                            if (FollowSet.ContainsKey(FirstProductionList[j].ProductionSymbol) && FirstProductionList[j].ProductionList.SequenceEqual(States[i][l].ProductionList))
+                            if (FollowSet.ContainsKey(FirstProductionList[j].ProductionSymbol) && FirstProductionList[j].ProductionList.SequenceEqual(States[i][l].ProductionList) && FirstProductionList[j].ProductionSymbol == States[i][l].ProductionSymbol)
                             {
                                 foreach (var element in FollowSet[FirstProductionList[j].ProductionSymbol])
                                 {
                                     System.Console.WriteLine(i + " to " + j + " with " + element + " operation type : Reduce");
                                     file.WriteLine(String.Format("ACTION({0},{1}) == R{2}", i, element, j));
                                     Actions[(i, element)] = "R" + j;
-
+                                    
                                 }
                             }
                         }
@@ -599,7 +599,8 @@ namespace Tema2
 
             CreateParseTable();
 
-            if (IsSLR1())
+            var result = IsSLR1();
+            if (result == "")
             {
                 System.Console.WriteLine("Gramatica este SLR(1)");
                 ReadWords();
@@ -610,7 +611,7 @@ namespace Tema2
             }
             else
             {
-                System.Console.WriteLine("Gramatica nu este SLR(1)");
+                System.Console.WriteLine("Gramatica nu este SLR(1): " + result);
             }
 
             Console.ReadKey();
@@ -623,7 +624,7 @@ namespace Tema2
         }
 
 
-        public static bool IsSLR1()
+        public static string IsSLR1()
         {
 
             for (int i = 0; i < finalStates.Count; ++i)
@@ -642,9 +643,10 @@ namespace Tema2
 
                             follow1.IntersectWith(follow2);
 
+                            //Reduce - Reduce conflict
                             if (follow1.Count > 0)
                             {
-                                return false;
+                                return "Reduce - Reduce conflict";
                             }
                         }
 
@@ -652,19 +654,19 @@ namespace Tema2
                         {
                             var follow1 = FollowSet[finalStates[i][j].ProductionSymbol];
 
+                            //Shift - Reduce conflict
                             if (follow1.Contains(finalStates[i][k].GetCurrentSymbol()))
                             {
-                                return false;
+                                return "Shift - Reduce conflict";
                             }
                         }
                     }
                 }
             }
 
-            return true;
+            return "";
         }
 
-        /*TODO: change bool to list of integers */
         public static string GetDerivation(string word)
         {
 
@@ -695,6 +697,7 @@ namespace Tema2
                 {
 
                     string output = word + " este acceptat: \n";
+                    output += "1. " + FirstProductionList[1].PrintableToString() + "\n";
                     while (solution.Count() > 0)
                     {
                         output += solution.Pop();
@@ -720,7 +723,7 @@ namespace Tema2
                         var productionNr = Int32.Parse(expression.Substring(1));
                         var production = FirstProductionList[productionNr];
 
-                        for (int t = 1; t <= production.ProductionList.Count(); ++t)
+                        for (int t = 1; t <= production.ProductionLength(); ++t)
                             states.Pop();
 
                         solution.Push(productionNr + ". " + production.PrintableToString());

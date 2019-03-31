@@ -11,6 +11,18 @@ namespace Tema2
         public int DotPosition;
         public List<Char> ProductionList;
 
+        public int ProductionLength()
+        {
+            int count = 0;
+
+            for (int i = 0; i < ProductionList.Count; ++i)
+            {
+                count += (ProductionList[i] != '~') ? 1 : 0;
+            }
+
+            return count;
+        }
+
         public string PrintableToString()
         {
             string output;
