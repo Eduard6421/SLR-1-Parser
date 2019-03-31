@@ -11,6 +11,19 @@ namespace Tema2
         public int DotPosition;
         public List<Char> ProductionList;
 
+        public string PrintableToString()
+        {
+            string output;
+
+            output = ProductionSymbol + " -> ";
+            for (int i = 0; i < ProductionList.Count; ++i)
+            {
+                output += ProductionList[i];
+
+            }
+
+            return output;
+        }
 
         public override string ToString()
         {

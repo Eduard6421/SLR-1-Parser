@@ -456,11 +456,7 @@ namespace Tema2
 
                             foreach (char character in FirstSet[FirstProductionList[i].ProductionList[j + 1]])
                             {
-                                if (character == '&' && letter == 'E')
-                                {
-                                    int asd = 2;
-
-                                }
+                                
 
                                 if (character != '~')
                                     FollowSet[letter].Add(character);
@@ -484,11 +480,7 @@ namespace Tema2
 
                             foreach (char character in FollowSet[FirstProductionList[i].ProductionSymbol])
                             {
-                                if (character == '&' && letter == 'E')
-                                {
-                                    int asd = 2;
-
-                                }
+                                
                                 FollowSet[letter].Add(character);
                             }
 
@@ -508,11 +500,6 @@ namespace Tema2
 
                         foreach (char character in FollowSet[FirstProductionList[i].ProductionSymbol])
                         {
-                            if (character == '&' && letter1 == 'E')
-                            {
-                                int asd = 2;
-
-                            }
                             FollowSet[letter1].Add(character);
                         }
 
@@ -523,7 +510,6 @@ namespace Tema2
                     }
                 }
             }
-            int a = 2;
         }
         public static void CreateParseTable()
         {
@@ -557,6 +543,17 @@ namespace Tema2
             System.Console.WriteLine("1 to accept with $ ");
             file.WriteLine("ACTION(1,$) == A");
             Actions[(1, '$')] = "A";
+
+            for (int i = 0; i < States.Count(); ++i)
+            {
+                if (States[i][0].ProductionSymbol == 'S' && States[i][0].IsClosed())
+                {
+                    System.Console.WriteLine(i + " to accept with $ ");
+                    file.WriteLine("ACTION(" + i + ",$) == A");
+                    Actions[(i, '$')] = "A";
+
+                }
+            }
 
             file.Close();
 
@@ -602,7 +599,7 @@ namespace Tema2
                 ReadWords();
                 foreach (string word in Words)
                 {
-                    System.Console.WriteLine(word + " is " + CheckWord(word));
+                    System.Console.WriteLine(CheckWord(word));
                 }
             }
             else
@@ -616,7 +613,7 @@ namespace Tema2
 
         public static string CheckWord(string word)
         {
-            return (GetDerivation(word) == true ? "Accepted" : "Rejected");
+            return GetDerivation(word);
         }
 
 
@@ -662,7 +659,7 @@ namespace Tema2
         }
 
         /*TODO: change bool to list of integers */
-        public static bool GetDerivation(string word)
+        public static string GetDerivation(string word)
         {
 
             word = word + "$";
@@ -670,18 +667,35 @@ namespace Tema2
             var states = new Stack<int>();
             states.Push(0);
 
+            var solution = new Stack<string>();
 
             while (true)
             {
-                var state = states.Pop();
+                var state = states.Peek();
                 var symbol = word[i];
 
-                var expression = Actions[(state, symbol)];
+                string expression;
+                if (Actions.ContainsKey((state, symbol)))
+                {
+                    expression = Actions[(state, symbol)];
+                }
+                else
+                {
+                    return word + " nu este acceptat";
+                }
 
                 //Accept
                 if (expression.First() == 'A')
                 {
-                    return true;
+
+                    string output = word + " este acceptat: \n";
+                    while (solution.Count() > 0)
+                    {
+                        output += solution.Pop();
+                        output += "\n";
+                    }
+
+                    return output;
                 }
 
                 //Shift
@@ -698,22 +712,24 @@ namespace Tema2
                     {
 
                         var productionNr = Int32.Parse(expression.Substring(1));
-                        var production = FirstProductionList[productionNr]/*a productionNr productie */;
+                        var production = FirstProductionList[productionNr];
 
                         for (int t = 1; t <= production.ProductionList.Count(); ++t)
                             states.Pop();
+
+                        solution.Push(productionNr + ". " + production.PrintableToString());
 
                         states.Push(GoTo[(states.Peek(), production.ProductionSymbol)]);
                     }
                     else
                     {
                         //error
-                        return false;
+                        return word + " nu este acceptat";
                     }
                 }
             }
 
-            return false;
+            return word + " nu este acceptat";
         }
     }
 
