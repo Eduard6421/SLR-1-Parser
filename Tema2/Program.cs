@@ -117,6 +117,8 @@ namespace Tema2
                     HashSet<char> chars = new HashSet<char>();
                     for (int k = 0; k < States[i].Count; ++k)
                     {
+                        while (!States[i][k].IsClosed() && States[i][k].GetCurrentSymbol() == '~')
+                            States[i][k].DotPosition += 1;
 
                         if (!States[i][k].IsClosed())
                             chars.Add(States[i][k].GetCurrentSymbol());
@@ -140,6 +142,9 @@ namespace Tema2
                                 prod.ProductionSymbol = States[i][j].ProductionSymbol;
 
                                 prod.DotPosition = prod.DotPosition + 1;
+
+                                while (!prod.IsClosed() && prod.GetCurrentSymbol() == '~')
+                                    prod.DotPosition += 1;
 
                                 newState.Add(prod);
 
@@ -456,7 +461,7 @@ namespace Tema2
 
                             foreach (char character in FirstSet[FirstProductionList[i].ProductionList[j + 1]])
                             {
-                                
+
 
                                 if (character != '~')
                                     FollowSet[letter].Add(character);
@@ -480,7 +485,7 @@ namespace Tema2
 
                             foreach (char character in FollowSet[FirstProductionList[i].ProductionSymbol])
                             {
-                                
+
                                 FollowSet[letter].Add(character);
                             }
 
@@ -517,27 +522,28 @@ namespace Tema2
 
             for (int i = 0; i < States.Count; ++i)
             {
-                if (States[i][0].IsClosed())
+                for (int l = 0; l < States[i].Count; ++l)
                 {
-                    for (int j = 0; j < FirstProductionList.Count; ++j)
+                    if (States[i][l].IsClosed())
                     {
-                        if (FollowSet.ContainsKey(FirstProductionList[j].ProductionSymbol) && FirstProductionList[j].ProductionList.SequenceEqual(States[i][0].ProductionList))
+                        for (int j = 0; j < FirstProductionList.Count; ++j)
                         {
-                            foreach (var element in FollowSet[FirstProductionList[j].ProductionSymbol])
+                            if (FollowSet.ContainsKey(FirstProductionList[j].ProductionSymbol) && FirstProductionList[j].ProductionList.SequenceEqual(States[i][l].ProductionList))
                             {
-                                System.Console.WriteLine(i + " to " + j + " with " + element + " operation type : Reduce");
-                                file.WriteLine(String.Format("ACTION({0},{1}) == R{2}", i, element, j));
-                                Actions[(i, element)] = "R" + j;
+                                foreach (var element in FollowSet[FirstProductionList[j].ProductionSymbol])
+                                {
+                                    System.Console.WriteLine(i + " to " + j + " with " + element + " operation type : Reduce");
+                                    file.WriteLine(String.Format("ACTION({0},{1}) == R{2}", i, element, j));
+                                    Actions[(i, element)] = "R" + j;
 
-                                // De la follow
+                                }
                             }
-                            goto nextlabel;
                         }
+
                     }
 
                 }
-            nextlabel:
-                continue;
+
             }
 
             System.Console.WriteLine("1 to accept with $ ");
